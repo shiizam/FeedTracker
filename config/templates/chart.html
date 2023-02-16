@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+
+
+
+<script>
+
+var endpoint = '/options/'
+var django = "{{ user_feed_log }}"
+console.log(data)
+
+$.ajax({
+    method: "GET",
+    url: endpoint,
+    success: function(data){
+        console.log(data)
+        console.log(data.feed_amount)
+    }
+})
+
+
+
+</script>
+
+{% block body_block %}
+<script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+{% endblock %}

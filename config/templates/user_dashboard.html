@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% load filters %}
+{% block title %}Feed Tracker | Feed Log{% endblock %}
+
+
+
+{% block body_block %}
+
+<div class='py-4 mt-auto'>
+    <div class='container-fluid px-4'>
+
+        <div class='row justify-content-center'>
+            <div class='col-xl-12'>
+                
+                <div class='row'>
+                    <div class='col-md-6 mt-4'>
+                                                                        <!-- FEED ENTRY CARD -->
+                        <div class='card shadow-sm mb-3'>
+                            <div class='card-header'>
+                                <h5>Create New Feed Entry</h5>
+                            </div>
+                            
+                            <div class='card-body'>
+
+                                <div class="form-group">
+                                    <form method="POST">
+                                        {% csrf_token %}
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-lg-6">
+                                                    <label for="feedtime" class="form-label mt-2">Time of Feed</label>
+                                                    <input type="time" name="time" class="form-control" id="feedtime" placeholder="Time of Feed" required>
+                                                </div>
+
+                                                <div class="col-lg-6">
+                                                    <label for="feeddate" class="form-label mt-2">Date</label>
+                                                    <input type="date" name="date" class="form-control" id="feeddate" placeholder="Date" required>
+                                                </div>
+
+                                                    <div class="col-md-6">
+                                                        <label for="feedamount" class="form-label mt-2">Feed Amount</label>
+                                                        <div class="input-group flex-nowrap">
+                                                            <input type="number" name="amount" class="form-control" id="feedamount" min="0" placeholder="Amount" required>
+                                                            {% if user.units == 'IMPERIAL' %}
+                                                                <span class="input-group-text" id="oz">oz</span>
+                                                            {% else %}
+                                                                <span class="input-group-text" id="metric">mL</span>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+
+                                                    
+
+                                                <div class="col-lg-6">
+                                                    <button name="logentry" type="submit" class="btn btn-primary" style='margin-top:40px;'>Add Entry</button>
+                                                </div>
+                                                
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                
+                            </div>
+                        </div>
+
+                        <!-- 
+                                                                    FEEDINGS LOG TABLE CARD 
+
+                        THIS IS WHERE THE CUSTOM FILTER TAG IS BEING USED TO CONVERT THE AMOUNT OF ENTRY TO METRIC BASED ON USER SETTINGS
+                        -->
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-header">
+                                <h5>Feeding Log for:</h5>
+                                
+                                {% if filter_date and now != filter_date %}
+                                <h5><strong class="text-primary" id="currentDate">{{filter_date|date:'D, F jS Y'}}</strong></h5>
+                                {% else %}
+                                    <h5><strong class="text-primary" id="currentDate">{% now 'D, F jS Y' %}</strong></h5>
+                                {% endif %}
+                                <form method="POST">
+                                {% csrf_token %}
+                                    <div class="form-group">
+                                        <div class="col-sm-6">
+                                            <label for="/" class="form-label mt-2"><h5>Filter Log by:</h5></label>
+                                            <input class="form-control" type="date" name="dayfilter" id="dayfilter" required>
+                                        </div>
+                                        <div class="col-lg-6 mt-3">
+                                            <button name="logfilter" type="submit" class="btn btn-primary" >Filter</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="card-body">
+                                <table id="feedtable" class="table table-hover shadow" style="text-align: center; vertical-align: middle;">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th scope="col" class="col-md-2">Time of Feeding</th>
+                                            {% if user.units == 'IMPERIAL' %}
+                                            <th scope="col" class="col-md-2">Amount - oz</th>
+                                            {% else %}
+                                            <th scope="col" class="col-md-2">Amount - mL</th>
+                                            {% endif %}
+                                            <th scope='col' class='col-md-2'></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if filter_date %}
+                                            {% for entry in filter_entries %}
+                                                <tr>
+                                                    <td class="col md-2">{{ entry.time_of_feed }}</td>
+                                                    {% if user.units == 'IMPERIAL' %}
+                                                        <td class="col md-2">{{ entry.feed_amount|convert_feeds:user.units }}</td>
+                                                    {% else %}
+                                                        <td class="col md-2">{{ entry.feed_amount }}</td>
+                                                    {% endif %}
+                                                    <td>
+                                                        <a class="btn btn-danger" href="{% url 'feeds:delete' entry.id %}">
+                                                            <i class="fa-solid fa-trash-can"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            {% for entry in user_feed_log %}
+                                                {% if entry.date_created == entry.current_date %}
+                                                    <tr>
+                                                        <td class="col md-2">{{ entry.time_of_feed }}</td>
+                                                        {% if user.units == 'IMPERIAL' %}
+                                                            <td class="col md-2">{{ entry.feed_amount|convert_feeds:user.units }}</td>
+                                                        {% else %}
+                                                            <td class="col md-2">{{ entry.feed_amount }}</td>
+                                                        {% endif %}
+                                                        <td>
+                                                            <a class="btn btn-danger" href="{% url 'feeds:delete' entry.id %}">
+                                                                <i class="fa-solid fa-trash-can"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {%endif%}
+                                        <tr class="table-secondary">
+                                            <td id="feedTime" class="col md-2"><b>Total</b></td>
+                                            <td id="totalFeed" class="col md-2"><b></b></td>
+                                            <td></td>
+                                        </tr>
+                                    
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                                                        <!-- 
+                                                            FEED GOAL PROGRESS BAR
+                                                        -->
+                    <div class="col-md-6 mt-4">
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-header">
+                                {% if user.units == 'IMPERIAL' %}
+                                <h5 id="impGoal">Daily Feed Goal - <strong class="text-primary" id="usergoal">{{ user.feed_goal|convert_feeds:user.units }}</strong>
+                                    <strong class="text-primary" id="impUnits"> FL OZ</strong>
+                                </h5>
+                                {% else %}
+                                <h5 id="metGoal">Daily Feed Goal - <strong class="text-primary" id="usergoal">{{ user.feed_goal }}</strong>
+                                    <strong class="text-primary" id="metUnits"> mL</strong>
+                                </h5>
+                                {% endif %}
+                                
+                            </div>
+                                
+                            <div class="card-body justify-content-center">
+
+                                <div 
+                                    class="progress" 
+                                    role="progressbar"
+                                    aria-label="0" 
+                                    aria-valuenow="0" 
+                                    aria-valuemin="0" 
+                                    aria-valuemax="100"
+                                    style="height: 3rem; font-size: 1.5rem;">
+                                    <div class="progress-label"></div>
+                                    <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" id="progressBar" style="width: 0%; min-width: 2em; max-width: 100%;"></div>
+                                </div>
+
+                            </div>
+                        </div>
+                                                                                    <!-- FEED LOG CHARTS  -->
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-header">
+                                <h5>Feeding Charts</h5>
+                            </div>
+                            <div class="card-body bg-muted justify-content-center"> 
+                                <div class="chartBox">
+                                    <canvas id="dailyBarChart"></canvas>
+                                    <canvas id="weeklyBarChart"></canvas>
+                                    <canvas id="monthlyBarChart"></canvas>
+                                </div>
+                    
+                                <div class="form-group">
+                                    <div class="row">
+                                        
+                                        <div class="col-sm-6">
+                                            <select class="form-control" name="dataFilter" id="dataFilter">
+                                                <option id="daily" value="daily">Daily</option>
+                                                <option value="weekly">Past 7 Days</option>
+                                                <option value="monthly">This Month</option>
+                                            </select>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class='card shadow-sm mb-3'>
+                            <div class='card-header'>
+                                <h5>Feeding Conversion Rate</h5>
+                            </div>
+                            <div class='card-body'>
+                                <div class="form-group">
+                                    <form method="#" id="convertForm">
+                                        {% csrf_token %}
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-lg-6">
+                                                    <label for="feedlength" class="form-label mt-2">Length of Feed</label>
+                                                    <input type="number" name="feedlength" class="form-control" id="feedlength" min="0.5" max="24" value="0" step="0.5" placeholder="Enter Hours: 0.5 increments" required>
+                                                    <small id="lengthHelp" class="form-text text-muted">Enter Hours (30 minutes = 0.5) </small>
+                                                </div>
+
+                                                <div class="col-lg-6">
+                                                    <label for="nextfeedamount" class="form-label mt-2">Feed Amount</label>
+                                                    <div class="input-group flex-nowrap">
+                                                        <input type="number" name="nextfeedamount" class="form-control" id="nextfeedamount" placeholder="Feed Amount" required>
+                                                        {% if user.units == 'IMPERIAL' %}
+                                                            <span class="input-group-text">oz</span>
+                                                        {% else %}
+                                                            <span class="input-group-text">mL</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-lg-6">
+                                                    <label for="rate" class="form-label mt-2">Feed Rate</label>
+                                                    <div class="input-group flex-nowrap">
+                                                        <input type="text" class="form-control" name="display" id="rate" disabled>
+                                                        {% if user.units == 'IMPERIAL' %}
+                                                            <span class="input-group-text" id="oz-rate">oz/Hour</span>
+                                                        {% else %}
+                                                            <span class="input-group-text" id="metric-rate">mL/Hour</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-lg-6">
+                                                    <button id="convert" type="submit" class="btn btn-primary" style='margin-top:40px;'>Convert Rate</button>
+                                                </div>
+                                                
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+    <!-- Chart.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
+
+    <!-- Jquery Script -->
+<script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+
+    <!-- Feed Log JS -->
+<script src="{% static 'js/feedlog.js' %}"></script>
+
+
+{% endblock %}
+
+
+
