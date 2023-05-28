@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'formulatracker',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -83,6 +84,7 @@ environ.Env.read_env()
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY")
 
+# NOTE: NOT DEFAULT! Using PostgreSQL instead of sqlite
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
